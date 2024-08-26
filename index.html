@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自動車保険診断ボット</title>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const questions = [
+            {
+                question: "年間走行距離",
+                options: ["5000km未満", "5000～10000km", "10000km以上"]
+            },
+            {
+                question: "車の使用目的",
+                options: ["通勤・通学", "レジャー・週末のみ", "日常の買い物"]
+            },
+            {
+                question: "保険料",
+                options: ["とにかく安くしたい", "バランスよく選びたい", "多少高くても安心感を重視"]
+            },
+            {
+                question: "補償内容",
+                options: ["最低限で良い", "平均的な内容で良い", "万全の補償を希望"]
+            },
+            {
+                question: "事故対応",
+                options: ["早い方が良い", "特にこだわらない"]
+            },
+            {
+                question: "長期利用割引",
+                options: ["はい", "いいえ"]
+            },
+            {
+                question: "等級",
+                options: ["6等級以下", "7～10等級", "11等級以上"]
+            },
+            {
+                question: "車種",
+                options: ["軽自動車", "コンパクトカー", "セダン", "SUV", "スポーツカー", "ミニバン"]
+            },
+            {
+                question: "使用頻度",
+                options: ["毎日", "週に2～3回", "月に数回"]
+            }
+        ];
+
+        const insurancePlans = [
+            {
+                name: "ソニー損保の走行距離型プラン",
+                description: "毎日使用する方で、走行距離がある程度多い場合に最適。低等級でも割引が適用されやすい。",
+                criteria: { grade: "6等級以下", carType: "軽自動車", frequency: "毎日", accidentResponse: "早い方が良い" },
+                logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E3%82%BF%E3%82%99%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%88%E3%82%99%20(8)-f4xgd1jTQPm0DYMjrp83L4k1JGcQRA.jpeg"
+            },
+            {
+                name: "SBI損保の標準プラン",
+                description: "比較的低価格で、コンパクトカー向けの補償が充実しています。保険料を抑えつつ、平均的な補償が得られます。",
+                criteria: { grade: "7～10等級", carType: "コンパクトカー", frequency: "週に2～3回", cost: "とにかく安くしたい" },
+                logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/images%20(1)-uheC777lwbxXgCCO3FbCQ642VWIG5W.png"
+            },
+            {
+                name: "セゾンのおとなの自動車保険 高グレードプラン",
+                description: "高等級で、セダンなどの高級車に対応した手厚い補償が特徴です。月に数回の利用でも、しっかりした補償が求められる方に最適。",
+                criteria: { grade: "11等級以上", carType: "セダン", frequency: "月に数回", coverage: "万全の補償を希望" },
+                logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/header-logo-mmiqLbMmOa6TvHIkr4fqnIl2XJU6Ue.svg"
+            },
+            {
+                name: "チューリッヒの安心プラン",
+                description: "毎日使用する方に適したプランで、特に事故対応が充実しています。長距離ドライブが多い方にもおすすめ。",
+                criteria: { grade: "7～10等級", carType: "SUV", frequency: "毎日", accidentResponse: "早い方が良い" },
+                logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/d5927-121-748482-0-qKIxViVRhCpI7SHO330Ma00QTzRS22.png"
+            },
+            {
+                name: "イーデザイン損保のドライブレコーダープラン",
+                description: "スポーツカーに乗る方で、ドライブレコーダー連動型のプラン。安全運転と万全な補償を両立できます。",
+                criteria: { grade: "11等級以上", carType: "スポーツカー", frequency: "月に数回", coverage: "万全の補償を希望" },
+                logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ogimage-IcLTqdfYEDdrenAdnuPdLYuD6oHiVk.png"
+            },
+            {
+                name: "アクサダイレクトの基本プラン",
+                description: "ミニバン向けに、低等級でもコストを抑えた補償を提供します。家族利用が多い方にもおすすめです。",
+                criteria: { grade: "6等級以下", carType: "ミニバン", frequency: "週に2～3回", cost: "とにかく安くしたい" },
+                logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/header-logo-mmiqLbMmOa6TvHIkr4fqnIl2XJU6Ue.svg"
+            }
+        ];
+
+        function InsuranceBot() {
+            const [currentQuestion, setCurrentQuestion] = React.useState(0);
+            const [answers, setAnswers] = React.useState({});
+            const [result, setResult] = React.useState(null);
+
+            const handleAnswer = (answer) => {
+                setAnswers({ ...answers, [questions[currentQuestion].question]: answer });
+                if (currentQuestion < questions.length - 1) {
+                    setCurrentQuestion(currentQuestion + 1);
+                } else {
+                    determineInsurancePlan();
+                }
+            };
+
+            const determineInsurancePlan = () => {
+                const userAnswers = {
+                    grade: answers["等級"],
+                    carType: answers["車種"],
+                    frequency: answers["使用頻度"],
+                    accidentResponse: answers["事故対応"],
+                    cost: answers["保険料"],
+                    coverage: answers["補償内容"]
+                };
+
+                const recommendedPlan = insurancePlans.find(plan => 
+                    Object.entries(plan.criteria).every(([key, value]) => userAnswers[key] === value)
+                ) || insurancePlans[0]; // Default to the first plan if no match is found
+
+                setResult(recommendedPlan);
+            };
+
+            const resetQuiz = () => {
+                setCurrentQuestion(0);
+                setAnswers({});
+                setResult(null);
+            };
+
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+
+            if (result) {
+                return (
+                    <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 max-w-lg w-full">
+                        <h2 className="text-2xl font-bold mb-4">診断結果</h2>
+                        <p className="mb-4">あなたにおすすめの保険プラン</p>
+                        <div className="flex items-center space-x-4 mb-4">
+                            <img src={result.logo} alt={`${result.name}のロゴ`} className="w-16 h-16 object-contain" />
+                            <h3 className="text-lg font-semibold">{result.name}</h3>
+                        </div>
+                        <p className="mb-6">{result.description}</p>
+                        <button onClick={resetQuiz} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
+                            もう一度診断する
+                        </button>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 max-w-lg w-full">
+                    <h2 className="text-2xl font-bold mb-4">自動車保険診断</h2>
+                    <p className="mb-4">質問に答えて、最適な保険プランを見つけましょう</p>
+                    <div className="mb-4 bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                        <div className="bg-blue-600 h-2.5 rounded-full" style={{width: `${progress}%`}}></div>
+                    </div>
+                    <h3 className="text-lg font-semibold mb-4">{questions[currentQuestion].question}</h3>
+                    <div className="space-y-2">
+                        {questions[currentQuestion].options.map((option, index) => (
+                            <div key={index} className="flex items-center">
+                                <input
+                                    type="radio"
+                                    id={`option-${index}`}
+                                    name="answer"
+                                    value={option}
+                                    onChange={() => handleAnswer(option)}
+                                    className="mr-2"
+                                />
+                                <label htmlFor={`option-${index}`}>{option}</label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<InsuranceBot />, document.getElementById('root'));
+    </script>
+</body>
+</html>
