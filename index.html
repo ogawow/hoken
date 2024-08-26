@@ -115,11 +115,21 @@
                     coverage: answers["補償内容"]
                 };
 
-                const recommendedPlan = insurancePlans.find(plan => 
-                    Object.entries(plan.criteria).every(([key, value]) => userAnswers[key] === value)
-                ) || insurancePlans[0]; // Default to the first plan if no match is found
+                // Calculate a score for each plan based on matching criteria
+                const planScores = insurancePlans.map(plan => {
+                    let score = 0;
+                    for (const [key, value] of Object.entries(plan.criteria)) {
+                        if (userAnswers[key] === value) {
+                            score++;
+                        }
+                    }
+                    return { plan, score };
+                });
 
-                setResult(recommendedPlan);
+                // Sort plans by score (highest first) and select the best match
+                const bestMatch = planScores.sort((a, b) => b.score - a.score)[0].plan;
+
+                setResult(bestMatch);
             };
 
             const resetQuiz = () => {
